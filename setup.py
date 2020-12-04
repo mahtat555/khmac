@@ -21,3 +21,13 @@ def readme(filename="README.md"):
     """
     with open(path.join(DIRNAME, filename)) as _file:
         return _file.read()
+
+
+def requirements():
+    """Returns the libraries (packages) required for the project to operate
+
+    Returns:
+        list: List of libraries required for project
+    """
+    with open(path.join(DIRNAME, "requirements.txt")) as _file:
+        return _file.read().splitlines()
