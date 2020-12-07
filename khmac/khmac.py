@@ -15,9 +15,18 @@ from _operator import _compare_digest as cmp
 OPAD = bytes(i ^ 0x5c for i in range(256))
 IPAD = bytes(i ^ 0x36 for i in range(256))
 
-## Exclusive-Or function
-# For Exclusive-Or `Key` with `ipad` and `Key` with `opad`
-XOR = bytes.translate
+
+def xor(key, pad):
+    """Make the XOR between key and pad
+
+    Args:
+        key (bytes|bytearray|str): The secret key
+        pad (bytes): Is equal to OPAD or IPAD
+
+    Returns:
+        (bytes|bytearray|str): XOR between key and pad
+    """
+    return key.translate(pad)
 
 
 # KHMAC : keyed-hash message authentication code.
@@ -96,10 +105,10 @@ class KHMAC:
 
         ## Calculate hmac
         # step 2 -- calculate hash(k + opad)
-        self.block_1 = hash_func(XOR(key, OPAD))
+        self.block_1 = hash_func(xor(key, OPAD))
 
         # step 3 -- calculate hash((k + ipad) || m)
-        self.block_2 = hash_func(XOR(key, IPAD))
+        self.block_2 = hash_func(xor(key, IPAD))
         self.block_2.update(msg)
 
 
