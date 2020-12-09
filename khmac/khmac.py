@@ -10,6 +10,7 @@ standard <<Key hash message authentication code (HMAC) (FIPS PUB 198).>>
 
 import hashlib
 from _operator import _compare_digest as cmp
+from binascii import unhexlify, Error
 
 # ipad and opad were chosen in order to have an important Hamming distance
 OPAD = bytes(i ^ 0x5c for i in range(256))
@@ -114,10 +115,12 @@ class KHMAC:
         self.block_2 = hash_func(xor(key, IPAD))
 
         if msg:
-           self.update(msg)
+            self.update(msg)
 
     def __finalize(self):
-        # step 4 -- calculate hash((k + opad) || hash((k + ipad) || m))
+        """ Return a `KHMAC` object for the current state
+
+        """
         hmac = self.block_1.copy()
         hmac.update(self.block_2.digest())
         return hmac
@@ -145,15 +148,19 @@ class KHMAC:
         """
         self.block_2.update(msg)
 
-    def verify(self, hmac: bytes) -> bool:
-        """Checks if a `hmac` corresponds to the message using
-        the secret key `key`.
+    def verify(self, hmac) -> bool:
+        """Check the equality of HMACs.
 
-        Parameters:
-            hmac :bytes -- the digest value as a bytes object.
-
-        Return :boolean -- return false if the `hmac` does not match,
-            else return true.
-
+        Returns:
+            boolean: return true if the HMACs are equal, else return false.
         """
+        if isinstance(hmac, KHMAC) :
+            hmac = hmac.digest()
+
+        # Check if the hmac is hexadecimal
+        try:
+            hmac = unhexlify(hmac)
+        except Error:
+            pass
+
         return cmp(hmac, self.digest())
