@@ -32,41 +32,10 @@ def xor(key, pad):
 
 # KHMAC : keyed-hash message authentication code.
 class KHMAC:
-    """KHMAC(key :bytes, msg :bytes, hash="sha1").
+    """KHMAC(key, msg, hash_func="sha1").
 
     Allows the generation of a MAC (Message Authentication Code)
     from a cryptographic hash function.
-
-    Methods :
-        digest() -- Return the current digest value.
-        hexdigest() -- Return the current digest as a string of
-            hexadecimal digits.
-        verify() -- Verify if the hmac corresponds to the message
-            using the secret key.
-
-    Parameters :
-        key  :bytes -- The secret key. This must be kept secret.
-        msg  :bytes -- The data on which the HMAC is calculated.
-        hash :str -- An approved hash function, default `sha1`.
-
-    Examples :
-        >>> # Example 1
-        >>> msg1 = b"I am Mr. Yassin !"
-        >>> hmac1 = KHMAC(b"my secret key", msg1, "sha3_256")
-        >>> h_digest = hmac1.digest()
-        >>> msg2 = b"I am Mr. Yassin !"
-        >>> hmac2 = KHMAC(b"my secret key", msg2, "sha3_256")
-        >>> hmac2.verify(h_digest)
-        True
-        >>>
-        ...
-        >>> # Example 2
-        >>> h1 = KHMAC(b"my secret key", b"Hello ")
-        >>> h1.update(b"world !!")
-        >>> h1_digest = h1.digest()
-        >>> h2 =  KHMAC(b"my secret key", b"Hello world !!")
-        >>> h2.verify(h1_digest)
-        True
 
     """
 
@@ -74,14 +43,10 @@ class KHMAC:
         """Create a new `KHMAC` object.
 
         Parameters :
-            key  :bytes -- Secret key shared between the originator
-                  and the intended receiver(s).
-            msg  :bytes -- He data you wish to pass into the context.
-            hash :string -- The hash algorithm being used by this object.
-                 Defaults to `sha1`.
-                 Is in {'sha224', 'blake2b', 'sha512', 'md5', 'blake2s',
-                 'sha3_224', 'sha384', 'sha3_384', 'sha3_256', 'sha3_512',
-                 'sha256', 'sha1'}
+            key: str, bytes or bytearray. The secret key. This must be kept
+                secret.
+            msg: str, bytes or bytearray. The data where HMAC is calculated
+            hash_func: A hash function name.
 
         """
         # Test if the key is a bytes or bytearray or str
@@ -98,7 +63,7 @@ class KHMAC:
 
         # Test if the hash function is supported
         if callable(hash_func):
-            hash_func = hash_func
+            pass
         elif isinstance(hash_func, str) and hasattr(hashlib, hash_func):
             hash_func = getattr(hashlib, hash_func)
         else:
@@ -116,6 +81,12 @@ class KHMAC:
 
         if msg:
             self.update(msg)
+
+    def __str__(self):
+        return "KHMAC({})".format(self.hexdigest())
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
     def hashname(self):
@@ -158,7 +129,7 @@ class KHMAC:
         Returns:
             boolean: return true if the HMACs are equal, else return false.
         """
-        if isinstance(hmac, KHMAC) :
+        if isinstance(hmac, KHMAC):
             hmac = hmac.digest()
 
         # Check if the hmac is hexadecimal
