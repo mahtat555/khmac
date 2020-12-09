@@ -111,18 +111,22 @@ class KHMAC:
 
         key = key.ljust(block_size, b'\0')
 
-        self.block_1 = hash_func(xor(key, OPAD))
-        self.block_2 = hash_func(xor(key, IPAD))
+        self.__block_1 = hash_func(xor(key, OPAD))
+        self.__block_2 = hash_func(xor(key, IPAD))
 
         if msg:
             self.update(msg)
+
+    @property
+    def hashname(self):
+        return self.__block_1.name
 
     def __finalize(self):
         """ Return a `KHMAC` object for the current state
 
         """
-        hmac = self.block_1.copy()
-        hmac.update(self.block_2.digest())
+        hmac = self.__block_1.copy()
+        hmac.update(self.__block_2.digest())
         return hmac
 
     def digest(self) -> bytes:
@@ -146,7 +150,7 @@ class KHMAC:
             >>> h.update(a+b)
 
         """
-        self.block_2.update(msg)
+        self.__block_2.update(msg)
 
     def verify(self, hmac) -> bool:
         """Check the equality of HMACs.
