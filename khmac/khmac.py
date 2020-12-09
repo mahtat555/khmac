@@ -83,34 +83,38 @@ class KHMAC:
                  'sha256', 'sha1'}
 
         """
-        if hasattr(hashlib, hash_func):
-            self.hash = hash
+        # Test if the key is a bytes or bytearray or str
+        if isinstance(key, str):
+            key = key.encode()
+        if not isinstance(key, (bytes, bytearray)):
+            raise TypeError("This key is not a bytes or bytearray !")
+
+        # Test if the message is a bytes or bytearray or str
+        if isinstance(msg, str):
+            msg = msg.encode()
+        if not isinstance(msg, (bytes, bytearray)):
+            raise TypeError("This message is not a bytes or bytearray !")
+
+        # Test if the hash function is supported
+        if callable(hash_func):
+            hash_func = hash_func
+        elif isinstance(hash_func, str) and hasattr(hashlib, hash_func):
             hash_func = getattr(hashlib, hash_func)
         else:
-            raise ValueError("unsupported hash type `{}`".format(hash))
+            raise ValueError("unsupported hash type `{}`".format(hash_func))
 
         block_size = hash_func().block_size
-        key_size = len(key)
 
-        # step 1 -- determine key
-        if key_size > block_size:
-            # hash `key`, then append
-            # zeros to create a block_size-bytes string `key`
-            key = hash_func(key).ljust(block_size, b'\x00')
+        if len(key) > block_size:
+            key = hash_func(key).digest()
 
-        elif key_size < block_size:
-            # Append zeros to the end of `key`,
-            # to create a block_size-bytes string `key`
-            key = key.ljust(block_size, b'\x00')
+        key = key.ljust(block_size, b'\0')
 
-        ## Calculate hmac
-        # step 2 -- calculate hash(k + opad)
         self.block_1 = hash_func(xor(key, OPAD))
-
-        # step 3 -- calculate hash((k + ipad) || m)
         self.block_2 = hash_func(xor(key, IPAD))
-        self.block_2.update(msg)
 
+        if msg:
+           self.update(msg)
 
     def __finalize(self):
         # step 4 -- calculate hash((k + opad) || hash((k + ipad) || m))
@@ -118,20 +122,17 @@ class KHMAC:
         hmac.update(self.block_2.digest())
         return hmac
 
-
     def digest(self) -> bytes:
         """Return the digest value as a bytes object.
 
         """
         return self.__finalize().digest()
 
-
     def hexdigest(self) -> str:
         """Return the digest value as a string of hexadecimal digits.
 
         """
         return self.__finalize().hexdigest()
-
 
     def update(self, msg: bytes) -> None:
         """Update the hmac object. Repeated calls are equivalent to a single
@@ -143,7 +144,6 @@ class KHMAC:
 
         """
         self.block_2.update(msg)
-
 
     def verify(self, hmac: bytes) -> bool:
         """Checks if a `hmac` corresponds to the message using
