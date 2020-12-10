@@ -9,8 +9,8 @@ standard <<Key hash message authentication code (HMAC) (FIPS PUB 198).>>
 """
 
 import hashlib
-from _operator import _compare_digest as cmp
 from binascii import unhexlify, Error
+from _operator import _compare_digest as cmp
 
 # ipad and opad were chosen in order to have an important Hamming distance
 OPAD = bytes(i ^ 0x5c for i in range(256))
@@ -53,13 +53,10 @@ class KHMAC:
         if isinstance(key, str):
             key = key.encode()
         if not isinstance(key, (bytes, bytearray)):
-            raise TypeError("This key is not a bytes or bytearray !")
+            raise TypeError("This key is not a bytes or a bytearray !")
 
         # Test if the message is a bytes or bytearray or str
-        if isinstance(msg, str):
-            msg = msg.encode()
-        if not isinstance(msg, (bytes, bytearray)):
-            raise TypeError("This message is not a bytes or bytearray !")
+        msg = self.__check_type_msg(msg)
 
         # Test if the hash function is supported
         if callable(hash_func):
@@ -90,6 +87,9 @@ class KHMAC:
 
     @property
     def hashname(self):
+        """ Returns a hash function name.
+
+        """
         return self.__block_1.name
 
     def copy(self):
@@ -109,6 +109,17 @@ class KHMAC:
         hmac.update(self.__block_2.digest())
         return hmac
 
+    def __check_type_msg(self, msg):
+        """ Check the type of message
+
+        """
+        if isinstance(msg, str):
+            return msg.encode()
+        if not isinstance(msg, (bytes, bytearray)):
+            raise TypeError("This message is not a bytes or a bytearray !")
+        return msg
+
+
     def digest(self) -> bytes:
         """Return the digest value as a bytes object.
 
@@ -121,7 +132,7 @@ class KHMAC:
         """
         return self.__finalize().hexdigest()
 
-    def update(self, msg: bytes) -> None:
+    def update(self, msg) -> None:
         """Update the hmac object. Repeated calls are equivalent to a single
         call with the concatenation of all the arguments:
             >>> h.update(a)
@@ -130,6 +141,7 @@ class KHMAC:
             >>> h.update(a+b)
 
         """
+        msg = self.__check_type_msg(msg)
         self.__block_2.update(msg)
 
     def verify(self, hmac) -> bool:
@@ -140,6 +152,9 @@ class KHMAC:
         """
         if isinstance(hmac, KHMAC):
             hmac = hmac.digest()
+
+        if isinstance(hmac, str):
+            hmac = hmac.encode()
 
         # Check if the hmac is hexadecimal
         try:
