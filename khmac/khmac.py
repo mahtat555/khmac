@@ -92,6 +92,15 @@ class KHMAC:
     def hashname(self):
         return self.__block_1.name
 
+    def copy(self):
+        """Return a separate copy of this khmac object.
+
+        """
+        khmac = self.__class__.__new__(self.__class__)
+        khmac.__block_1 = self.__block_1.copy()
+        khmac.__block_2 = self.__block_2.copy()
+        return khmac
+
     def __finalize(self):
         """ Return a `KHMAC` object for the current state
 
